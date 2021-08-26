@@ -1,6 +1,6 @@
 # Origami
 
-#### This project use the following technologies:
+#### This project uses the following technologies:
 
 > - Retrofit
 > - Room
