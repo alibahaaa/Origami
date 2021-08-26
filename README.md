@@ -2,8 +2,8 @@
 
 # This project use the following technologies:
 
-# - Retrofit
-# - Room
+##> - Retrofit
+##> - Room
 # - Hilt DI
 # - Kotlin Coroutines
 # - Flow
