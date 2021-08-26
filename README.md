@@ -4,7 +4,7 @@
 
 > - Retrofit
 > - Room
-> - Hilt DI
+> - **Hilt DI**
 > - Kotlin Coroutines
 > - Flow
 > - View Model
