@@ -9,7 +9,7 @@
 > - Flow
 > - View Model
 > - Repository pattern
-> - **Clean Architecture
-> - **JetPack Compose
+> - **Clean Architecture**
+> - **JetPack Compose**
 
 Figma design : https://www.figma.com/file/mcAetsZZRiRJevwjzcaCOM/Origami?node-id=0%3A1
