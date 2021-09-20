@@ -18,7 +18,7 @@ object RemoteModule {
     @Provides
     fun provideApiService(): Retrofit = Retrofit.Builder()
         .addConverterFactory(GsonConverterFactory.create())
-        .baseUrl("https://piapp.ir/")
+        .baseUrl("https://8c4b94ae-33dd-4c4b-994b-b7267bdc5219.mock.pstmn.io/")
         .build()
 
     @Singleton
