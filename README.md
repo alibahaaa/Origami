@@ -16,7 +16,7 @@
 #### Preview:
 > <img src="https://8pic.ir/uploads/Screenshot-1641827240.png" width=200>
 > 
-#### Design:
+#### Design: 
 > [Figma](https://www.figma.com/file/mcAetsZZRiRJevwjzcaCOM/Origami?node-id=0%3A1)
 
 
