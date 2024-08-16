@@ -39,8 +39,8 @@ jobs:
 
       - name: Launch emulator
         run: |
-          # Example start_emu_headless.sh script (replace with actual commands if needed)
-          nohup $ANDROID_HOME/emulator/emulator -avd $EMULATOR_NAME -no-window -no-boot-anim -noaudio -gpu swiftshader_indirect &
+          chmod +x ./start_emu_headless.sh
+          EMULATOR_TIMEOUT=$EMULATOR_TIMEOUT EMULATOR_NAME=$EMULATOR_NAME ./start_emu_headless.sh
 
       - name: Wait for Emulator to start
         run: |
