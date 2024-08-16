@@ -40,4 +40,4 @@ jobs:
     - name: Run Maestro Tests
       env:
         PATH: ${{ env.PATH }}:$HOME/.maestro/bin
-      run: maestro test .maestro
+      run: maestro cloud --apiKey a4cfcbc0-195c-4fec-b156-94d9c6ab21b9 <appFile> .maestro/
