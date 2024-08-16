@@ -20,7 +20,7 @@ jobs:
       run: |
         curl -Ls "https://get.maestro.mobile.dev" | bash
         echo 'export PATH="$PATH:$HOME/.maestro/bin"' >> $GITHUB_ENV
-        echo "$HOME/.maestro/bin" >> $GITHUB_PATH  # Add this line to ensure the path is updated
+        echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
-    - name: Run Maestro Tests
-      run: maestro test .maestro
+    - name: Run Maestro Tests for Android
+      run: maestro test .maestro --platform android
