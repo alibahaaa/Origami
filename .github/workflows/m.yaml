@@ -8,7 +8,6 @@ on:
     branches:
       - master
 
-
 jobs:
   maestro-test:
     runs-on: ubuntu-latest
@@ -21,8 +20,7 @@ jobs:
       run: |
         curl -Ls "https://get.maestro.mobile.dev" | bash
         echo 'export PATH="$PATH:$HOME/.maestro/bin"' >> $GITHUB_ENV
+        echo "$HOME/.maestro/bin" >> $GITHUB_PATH  # Add this line to ensure the path is updated
 
     - name: Run Maestro Tests
-      env:
-        PATH: ${{ env.PATH }}:$HOME/.maestro/bin
       run: maestro test .maestro
