@@ -25,19 +25,29 @@ jobs:
     - name: Set up Android SDK
       uses: android-actions/setup-android@v2
       with:
-        api-level: 31
-        target: default
+        api-level: 29
+        target: google_apis
         channel: stable
 
     - name: Start Android Emulator
       run: |
-        sudo apt-get update
-        sudo apt-get install -y pulseaudio
         adb start-server
-        $ANDROID_HOME/emulator/emulator-headless -no-snapshot -noaudio -no-window -avd test &
+        $ANDROID_HOME/emulator/emulator-headless -avd test -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect &
 
-    - name: Wait for Emulator to start
-      run: adb wait-for-device
+    - name: Wait for Emulator to Start
+      run: |
+        boot_completed="adb shell getprop sys.boot_completed"
+        timeout=600
+        while [ "$($boot_completed | tr -d '\r')" != "1" ] && [ $timeout -gt 0 ]; do
+          sleep 10
+          timeout=$((timeout-10))
+        done
+        if [ $timeout -le 0 ]; then
+          echo "Emulator boot timed out."
+          exit 1
+        else
+          echo "Emulator booted successfully."
+        fi
 
     - name: Download and install Maestro
       run: |
