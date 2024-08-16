@@ -34,7 +34,7 @@ jobs:
 
     - name: Run Maestro tests
       run: |
-        maestro test --format junit
+        maestro test
       continue-on-error: false
 
     - name: Upload Maestro test results
