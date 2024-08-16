@@ -1,0 +1,28 @@
+name: Run Maestro Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+
+jobs:
+  maestro-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Download and install Maestro
+      run: |
+        curl -Ls "https://get.maestro.mobile.dev" | bash
+        echo 'export PATH="$PATH:$HOME/.maestro/bin"' >> $GITHUB_ENV
+
+    - name: Run Maestro Tests
+      env:
+        PATH: ${{ env.PATH }}:$HOME/.maestro/bin
+      run: maestro test .maestro
