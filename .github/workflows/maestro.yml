@@ -1,0 +1,44 @@
+name: Maestro Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  run-maestro-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Java
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v2
+      with:
+        api-level: 31
+        build-tools: 31.0.0
+
+    - name: Install Maestro
+      run: |
+        curl -Ls "https://get.maestro.mobile.dev" | bash
+
+    - name: Run Maestro tests
+      run: |
+        maestro test --format junit
+      continue-on-error: false
+
+    - name: Upload Maestro test results
+      uses: actions/upload-artifact@v2
+      with:
+        name: maestro-results
+        path: maestro-output/
