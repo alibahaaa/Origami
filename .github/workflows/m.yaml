@@ -8,42 +8,30 @@ on:
     branches:
       - master
 
-env:
-  ANDROID_ARCH: x86_64
-  ANDROID_TARGET: google_apis_playstore
-  API_LEVEL: 33
-  ANDROID_BUILD_TOOLS_VERSION: 33.0.2
-  ANDROID_SDK_PACKAGES: system-images;android-33;google_apis_playstore;x86_64 platforms;android-33 build-tools;33.0.2 platform-tools emulator
-  EMULATOR_TIMEOUT: 350
-  EMULATOR_NAME: nexus
-
 jobs:
   maestro-test:
     timeout-minutes: 20
-    runs-on: macos-latest  # or ubuntu-latest if macOS isn't required
+    runs-on: ubuntu-latest  # Consider using ubuntu-latest as it is typically faster for CI
+
     steps:
-      - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-      - name: Add avdmanager and sdkmanager to system PATH
-        run: |
-            echo "$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/${{ env.ANDROID_BUILD_TOOLS_VERSION }}" >> $GITHUB_PATH
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
 
-      - name: Install SDK
-        run: |
-           yes Y | sdkmanager --licenses
-           sdkmanager --install ${ANDROID_SDK_PACKAGES}
-
-      - name: Build emulator
-        run: |
-            echo "no" | avdmanager --verbose create avd --force -n $EMULATOR_NAME --abi "${ANDROID_TARGET}/${ANDROID_ARCH}" -k "system-images;android-${API_LEVEL};${ANDROID_TARGET};${ANDROID_ARCH}"
-
-      - name: Launch emulator
-        run: |
-          chmod +x ./start_emu_headless.sh
-          EMULATOR_TIMEOUT=$EMULATOR_TIMEOUT EMULATOR_NAME=$EMULATOR_NAME ./start_emu_headless.sh
-
-      - name: Wait for Emulator to start
-        run: |
+    - name: Set up Android SDK
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 33
+        target: google_apis_playstore
+        arch: x86_64
+        force-avd-creation: true
+        emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect'
+        script: |
+          # Wait for the emulator to fully boot
           adb wait-for-device
           boot_completed=false
           until [[ "$boot_completed" == "1" ]]; do
@@ -51,15 +39,15 @@ jobs:
             boot_completed=$(adb shell getprop sys.boot_completed | tr -d '\r')
           done
 
-      - name: Download and install Maestro
-        run: |
-          curl -Ls "https://get.maestro.mobile.dev" | bash
-          echo 'export PATH="$PATH:$HOME/.maestro/bin"' >> $GITHUB_ENV
-          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+    - name: Download and install Maestro
+      run: |
+        curl -Ls "https://get.maestro.mobile.dev" | bash
+        echo 'export PATH="$PATH:$HOME/.maestro/bin"' >> $GITHUB_ENV
+        echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
-      - name: Run Maestro Tests
-        run: maestro test .maestro
+    - name: Run Maestro Tests
+      run: maestro test .maestro
 
-      - name: Stop Emulator
-        if: always()
-        run: adb emu kill
+    - name: Stop Emulator
+      if: always()
+      run: adb emu kill
