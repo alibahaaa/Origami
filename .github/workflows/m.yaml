@@ -31,6 +31,7 @@ jobs:
         arch: x86_64
         force-avd-creation: true
         emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect -no-snapshot-load'
+        script: echo "Emulator configured and running"
       env:
         ADB_INSTALL_TIMEOUT: 20
 
