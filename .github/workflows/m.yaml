@@ -54,6 +54,9 @@ jobs:
           exit 1
         fi
 
+    - name: Check connected devices
+      run: adb devices
+
     - name: Build APK
       run: ./gradlew assembleDebug  # Replace with your build command
 
@@ -64,7 +67,10 @@ jobs:
         echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
 
     - name: Install APK
-      run: adb install $APK_PATH
+      run: |
+        echo "Attempting to install APK at $APK_PATH"
+        adb devices
+        adb install $APK_PATH
 
     - name: Download and install Maestro
       run: |
