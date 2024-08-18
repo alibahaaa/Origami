@@ -51,6 +51,11 @@ jobs:
           adb devices | grep emulator
         done
 
+    - name: Check Emulator Connection
+      run: |
+        adb devices
+        adb shell getprop init.svc.bootanim
+
     - name: Download and install Maestro
       run: |
         curl -Ls "https://get.maestro.mobile.dev" | bash
