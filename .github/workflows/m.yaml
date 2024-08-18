@@ -27,34 +27,32 @@ jobs:
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 33
-        target: default  # Change to 'default' if google_apis_playstore is too slow
+        target: default
         arch: x86_64
         force-avd-creation: true
         emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect -no-snapshot-load'
-        script: echo "Emulator configured and running"
+        script: |
+          echo "Emulator configured and running"
       env:
         ADB_INSTALL_TIMEOUT: 20
 
     - name: Wait for emulator to be ready
       run: |
-        max_attempts=10
+        max_attempts=20
         attempt=0
-        boot_completed=false
-        until [[ "$boot_completed" == "1" ]]; do
-          attempt=$((attempt + 1))
-          if [ $attempt -ge $max_attempts ]; then
-            echo "Emulator failed to start after $max_attempts attempts."
-            exit 1
+        while [ $attempt -lt $max_attempts ]; do
+          if adb devices | grep -q emulator; then
+            echo "Emulator is running."
+            break
           fi
+          attempt=$((attempt + 1))
+          echo "Waiting for emulator to be ready... (attempt $attempt)"
           sleep 10
-          boot_completed=$(adb shell getprop sys.boot_completed | tr -d '\r')
-          adb devices | grep emulator
         done
-
-    - name: Check Emulator Connection
-      run: |
-        adb devices
-        adb shell getprop init.svc.bootanim
+        if [ $attempt -ge $max_attempts ]; then
+          echo "Emulator failed to start after $max_attempts attempts."
+          exit 1
+        fi
 
     - name: Download and install Maestro
       run: |
@@ -67,4 +65,5 @@ jobs:
 
     - name: Stop Emulator
       if: always()
-      run: adb emu kill
+      run: |
+        adb emu kill || echo "Failed to stop emulator, or emulator was not started."
