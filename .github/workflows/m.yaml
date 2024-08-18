@@ -27,10 +27,10 @@ jobs:
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 33
-        target: google_apis_playstore  # Change to 'default' if google_apis_playstore is too slow
+        target: default  # Change to 'default' if google_apis_playstore is too slow
         arch: x86_64
         force-avd-creation: true
-        emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect -no-snapshot-load -delay-adb 10'
+        emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect -no-snapshot-load'
         script: |
           # Retry mechanism to wait for the emulator to be ready
           max_attempts=10
