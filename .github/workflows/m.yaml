@@ -10,11 +10,12 @@ on:
 
 jobs:
   maestro-test:
-    timeout-minutes: 20
-    runs-on: ubuntu-latest  # Consider using ubuntu-latest as it is typically faster for CI
+    timeout-minutes: 30  # Increased timeout to ensure enough time for the emulator to start
+    runs-on: ubuntu-latest  # Using ubuntu-latest as it's faster for CI
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
     - name: Set up JDK 11
       uses: actions/setup-java@v3
@@ -22,21 +23,28 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
 
-    - name: Set up Android SDK
+    - name: Set up Android SDK and start emulator
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 33
-        target: google_apis_playstore
+        target: google_apis_playstore  # Change to 'default' if google_apis_playstore is too slow
         arch: x86_64
         force-avd-creation: true
-        emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect'
+        emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect -no-snapshot-load -delay-adb 10'
         script: |
-          # Wait for the emulator to fully boot
-          adb wait-for-device
+          # Retry mechanism to wait for the emulator to be ready
+          max_attempts=10
+          attempt=0
           boot_completed=false
           until [[ "$boot_completed" == "1" ]]; do
-            sleep 5
+            attempt=$((attempt + 1))
+            if [ $attempt -ge $max_attempts ]; then
+              echo "Emulator failed to start after $max_attempts attempts."
+              exit 1
+            fi
+            sleep 10
             boot_completed=$(adb shell getprop sys.boot_completed | tr -d '\r')
+            adb devices | grep emulator
           done
 
     - name: Download and install Maestro
