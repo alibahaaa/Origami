@@ -10,42 +10,25 @@ on:
 
 jobs:
   maestro-test:
-    timeout-minutes: 30  # Increased timeout to ensure enough time for the emulator to start
-    runs-on: ubuntu-latest  # Using ubuntu-latest as it's faster for CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up JDK 11
-      uses: actions/setup-java@v3
-      with:
-        java-version: '11'
-        distribution: 'temurin'
+    - name: Set up Docker container with Android emulator
+      run: |
+        docker run --detach --name android-emulator --device /dev/kvm \
+          -e DEVICE="Pixel_3" \
+          -e ANDROID_VERSION=33 \
+          -e EMULATOR_PARAMS="-no-window -no-boot-anim" \
+          budtmo/docker-android-x86-11.0
 
-    - name: Set up Android SDK and start emulator
-      uses: reactivecircus/android-emulator-runner@v2
-      with:
-        api-level: 33
-        target: default  # Change to 'default' if google_apis_playstore is too slow
-        arch: x86_64
-        force-avd-creation: true
-        emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect -no-snapshot-load'
-        script: |
-          # Retry mechanism to wait for the emulator to be ready
-          max_attempts=10
-          attempt=0
-          boot_completed=false
-          until [[ "$boot_completed" == "1" ]]; do
-            attempt=$((attempt + 1))
-            if [ $attempt -ge $max_attempts ]; then
-              echo "Emulator failed to start after $max_attempts attempts."
-              exit 1
-            fi
-            sleep 10
-            boot_completed=$(adb shell getprop sys.boot_completed | tr -d '\r')
-            adb devices | grep emulator
-          done
+    - name: Wait for Android Emulator to be ready
+      run: |
+        docker exec android-emulator adb wait-for-device
+        docker exec android-emulator adb shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
 
     - name: Download and install Maestro
       run: |
@@ -54,8 +37,11 @@ jobs:
         echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
     - name: Run Maestro Tests
-      run: maestro test .maestro
+      run: |
+        docker exec -t android-emulator maestro test .maestro
 
-    - name: Stop Emulator
+    - name: Stop Docker container
       if: always()
-      run: adb emu kill
+      run: |
+        docker stop android-emulator
+        docker rm android-emulator
