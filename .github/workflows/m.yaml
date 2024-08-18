@@ -54,6 +54,18 @@ jobs:
           exit 1
         fi
 
+    - name: Build APK
+      run: ./gradlew assembleDebug  # Replace with your build command
+
+    - name: Locate APK
+      id: locate_apk
+      run: |
+        APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk")
+        echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
+
+    - name: Install APK
+      run: adb install $APK_PATH
+
     - name: Download and install Maestro
       run: |
         curl -Ls "https://get.maestro.mobile.dev" | bash
@@ -61,7 +73,88 @@ jobs:
         echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
     - name: Run Maestro Tests
-      run: maestro test .maestro
+      run: maestro test .maestro --platform android  # Specify the platform here
+
+    - name: Stop Emulator
+      if: always()
+      run: |
+        adb emu kill || echo "Failed to stop emulator, or emulator was not started."
+name: Run Maestro Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  maestro-test:
+    timeout-minutes: 30  # Increased timeout to ensure enough time for the emulator to start
+    runs-on: ubuntu-latest  # Using ubuntu-latest as it's faster for CI
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: Set up Android SDK and start emulator
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 33
+        target: google_apis_playstore
+        arch: x86_64
+        force-avd-creation: true
+        emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect -no-snapshot-load'
+        script: |
+          echo "Emulator configured and running"
+      env:
+        ADB_INSTALL_TIMEOUT: 20
+
+    - name: Wait for emulator to be ready
+      run: |
+        max_attempts=20
+        attempt=0
+        while [ $attempt -lt $max_attempts ]; do
+          if adb devices | grep -q emulator; then
+            echo "Emulator is running."
+            break
+          fi
+          attempt=$((attempt + 1))
+          echo "Waiting for emulator to be ready... (attempt $attempt)"
+          sleep 10
+        done
+        if [ $attempt -ge $max_attempts ]; then
+          echo "Emulator failed to start after $max_attempts attempts."
+          exit 1
+        fi
+
+    - name: Build APK
+      run: ./gradlew assembleDebug  # Replace with your build command
+
+    - name: Locate APK
+      id: locate_apk
+      run: |
+        APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk")
+        echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
+
+    - name: Install APK
+      run: adb install $APK_PATH
+
+    - name: Download and install Maestro
+      run: |
+        curl -Ls "https://get.maestro.mobile.dev" | bash
+        echo 'export PATH="$PATH:$HOME/.maestro/bin"' >> $GITHUB_ENV
+        echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+    - name: Run Maestro Tests
+      run: maestro test .maestro --platform android  # Specify the platform here
 
     - name: Stop Emulator
       if: always()
