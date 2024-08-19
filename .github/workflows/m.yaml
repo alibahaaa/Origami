@@ -31,6 +31,7 @@ jobs:
         arch: x86_64
         force-avd-creation: true
         emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect -no-snapshot-load'
+        script: echo "Emulator is running"  # Placeholder script to avoid error
 
     - name: Wait for emulator to be ready
       run: |
@@ -86,4 +87,8 @@ jobs:
         echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
     - name: Run Maestro Tests
-      run: maestro test .maestro
+      run: maestro test .maestro --platform android  # Specify the platform here
+
+    - name: Stop Emulator
+      if: always()
+      run: adb emu kill
