@@ -27,12 +27,10 @@ jobs:
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 33
-        target: google_apis_playstore
+        target: default
         arch: x86_64
         force-avd-creation: true
         emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect -no-snapshot-load'
-      env:
-        ADB_INSTALL_TIMEOUT: 20
 
     - name: Wait for emulator to be ready
       run: |
@@ -88,9 +86,4 @@ jobs:
         echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
     - name: Run Maestro Tests
-      run: maestro test .maestro --platform android  # Specify the platform here
-
-    - name: Stop Emulator
-      if: always()
-      run: |
-        adb emu kill || echo "Failed to stop emulator, or emulator was not started."
+      run: maestro test .maestro
