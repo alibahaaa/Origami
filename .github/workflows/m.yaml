@@ -10,8 +10,8 @@ on:
 
 jobs:
   maestro-test:
-    timeout-minutes: 30  # Increased timeout to ensure enough time for the emulator to start
-    runs-on: ubuntu-latest  # Using ubuntu-latest as it's faster for CI
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
@@ -27,30 +27,39 @@ jobs:
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 33
-        target: default
+        target: google_apis_playstore
         arch: x86_64
         force-avd-creation: true
         emulator-options: '-no-window -no-boot-anim -noaudio -gpu swiftshader_indirect -no-snapshot-load'
-        script: |
-          echo "Emulator configured and running"
       env:
         ADB_INSTALL_TIMEOUT: 20
 
     - name: Wait for emulator to be ready
       run: |
-        max_attempts=20
+        max_attempts=30
         attempt=0
+        boot_completed=false
         while [ $attempt -lt $max_attempts ]; do
-          if adb devices | grep -q emulator; then
-            echo "Emulator is running."
-            break
-          fi
           attempt=$((attempt + 1))
-          echo "Waiting for emulator to be ready... (attempt $attempt)"
+          echo "Attempt $attempt: Checking if emulator is ready..."
+          if adb devices | grep -q emulator-5554; then
+            status=$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d '\r')
+            if [ "$status" == "1" ]; then
+              echo "Emulator is ready."
+              boot_completed=true
+              break
+            else
+              echo "Emulator is booting... waiting."
+            fi
+          else
+            echo "No emulator found, retrying..."
+          fi
           sleep 10
         done
-        if [ $attempt -ge $max_attempts ]; then
-          echo "Emulator failed to start after $max_attempts attempts."
+
+        if [ "$boot_completed" = false ]; then
+          echo "Emulator did not start correctly within the expected time."
+          adb devices
           exit 1
         fi
 
@@ -70,7 +79,7 @@ jobs:
       run: |
         echo "Attempting to install APK at $APK_PATH"
         adb devices
-        adb install $APK_PATH
+        adb install $APK_PATH || { echo "APK installation failed."; adb devices; exit 1; }
 
     - name: Download and install Maestro
       run: |
