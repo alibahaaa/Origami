@@ -35,32 +35,8 @@ jobs:
 
     - name: Wait for emulator to be ready
       run: |
-        max_attempts=30
-        attempt=0
-        boot_completed=false
-        while [ $attempt -lt $max_attempts ]; do
-          attempt=$((attempt + 1))
-          echo "Attempt $attempt: Checking if emulator is ready..."
-          if adb devices | grep -q emulator-5554; then
-            status=$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d '\r')
-            if [ "$status" == "1" ]; then
-              echo "Emulator is ready."
-              boot_completed=true
-              break
-            else
-              echo "Emulator is booting... waiting."
-            fi
-          else
-            echo "No emulator found, retrying..."
-          fi
-          sleep 10
-        done
-
-        if [ "$boot_completed" = false ]; then
-          echo "Emulator did not start correctly within the expected time."
-          adb devices
-          exit 1
-        fi
+        echo "Waiting for emulator to be ready..."
+        adb wait-for-device
 
     - name: Check connected devices
       run: adb devices
