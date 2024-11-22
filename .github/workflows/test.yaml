@@ -1,0 +1,4 @@
+name: Generate a Build
+
+on:
+  workflow_dispatch:
