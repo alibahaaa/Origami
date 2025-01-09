@@ -2,3 +2,62 @@ name: Generate a Build
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: Add version
+        required: true
+      release_notes:
+        type: string
+        description: Add release notes
+        required: false
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Build and Sign APK
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease -PsigningConfig=release
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ inputs.version }}
+          release_name: Release ${{ inputs.version }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Release Asset
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release.apk
+          path: app/build/outputs/apk/release/app-release.apk
+
+      - name: Install App Center CLI
+        run: npm install -g appcenter-cli
+
+      - name: Upload to App Center
+        env:
+          APPCENTER_API_TOKEN: ${{ secrets.APPCENTER_API_TOKEN }}
+        run: |
+          appcenter distribute release \
+            --token $APPCENTER_API_TOKEN \
+            --app Medopad/UCB-Collection \
+            --file app/build/outputs/apk/release/app-release.apk \
+            --group Collaborators \
+            --release-notes "Release notes for version ${{ inputs.version }} - ${{ inputs.release_notes }}"
